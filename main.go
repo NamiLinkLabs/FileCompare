@@ -19,7 +19,6 @@ import (
 type Config struct {
 	SourceDir          string
 	TargetDir          string
-	IncludedExtensions map[string]bool
 	ExcludedExtensions map[string]bool
 	LargeFileThreshold int64
 	PartialHashSize    int64
@@ -42,16 +41,12 @@ func loadConfig(filename string) (*Config, error) {
 	}
 
 	config := &Config{
-		IncludedExtensions: make(map[string]bool),
 		ExcludedExtensions: make(map[string]bool),
 	}
 
 	config.SourceDir = cfg.Section("Directories").Key("source_dir").String()
 	config.TargetDir = cfg.Section("Directories").Key("target_dir").String()
 
-	for _, ext := range cfg.Section("FileTypes").Key("included_extensions").Strings(",") {
-		config.IncludedExtensions[strings.TrimSpace(ext)] = true
-	}
 	for _, ext := range cfg.Section("FileTypes").Key("excluded_extensions").Strings(",") {
 		config.ExcludedExtensions[strings.TrimSpace(ext)] = true
 	}
@@ -145,7 +140,7 @@ func worker(paths <-chan string, results chan<- FileHash, wg *sync.WaitGroup, co
 	defer wg.Done()
 	for path := range paths {
 		ext := strings.ToLower(filepath.Ext(path))
-		if config.IncludedExtensions[ext] && !config.ExcludedExtensions[ext] {
+		if !config.ExcludedExtensions[ext] {
 			if hash, exists := cache.Get(path); exists {
 				results <- FileHash{Path: path, Hash: hash}
 			} else {
@@ -265,7 +260,7 @@ func compareDirectories(config *Config) error {
 		}
 	}
 
-	// Write results to CSV
+	// Write missing files to CSV
 	csvFile, err := os.Create("missing_files.csv")
 	if err != nil {
 		return err
@@ -280,7 +275,44 @@ func compareDirectories(config *Config) error {
 		writer.Write([]string{file})
 	}
 
-	fmt.Printf("\nResults saved to missing_files.csv\n")
+	// Write source duplicates to CSV
+	sourceDupsFile, err := os.Create("source_dups.csv")
+	if err != nil {
+		return err
+	}
+	defer sourceDupsFile.Close()
+
+	sourceDupsWriter := csv.NewWriter(sourceDupsFile)
+	defer sourceDupsWriter.Flush()
+
+	sourceDupsWriter.Write([]string{"Hash", "Duplicate Files"})
+	for hash, paths := range sourceHashes {
+		if len(paths) > 1 {
+			sourceDupsWriter.Write([]string{hash, strings.Join(paths, "|")})
+		}
+	}
+
+	// Write target duplicates to CSV
+	targetDupsFile, err := os.Create("target_dups.csv")
+	if err != nil {
+		return err
+	}
+	defer targetDupsFile.Close()
+
+	targetDupsWriter := csv.NewWriter(targetDupsFile)
+	defer targetDupsWriter.Flush()
+
+	targetDupsWriter.Write([]string{"Hash", "Duplicate Files"})
+	for hash, paths := range targetHashes {
+		if len(paths) > 1 {
+			targetDupsWriter.Write([]string{hash, strings.Join(paths, "|")})
+		}
+	}
+
+	fmt.Printf("\nResults saved to:\n")
+	fmt.Printf("- missing_files.csv\n")
+	fmt.Printf("- source_dups.csv\n")
+	fmt.Printf("- target_dups.csv\n")
 	fmt.Printf("\nTotal files processed in source: %d\n", len(sourceHashes))
 	fmt.Printf("Total files processed in target: %d\n", len(targetHashes))
 	fmt.Printf("Total missing files: %d\n", len(missingFiles))
@@ -303,7 +335,7 @@ func main() {
 	if len(os.Args) > 1 {
 		configPath = os.Args[1]
 	}
-	
+
 	config, err := loadConfig(configPath)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error loading config: %v\n", err)

@@ -1,6 +1,7 @@
 import subprocess
 import json
 import os
+import csv
 from typing import Dict, Optional, Tuple
 
 class CompareTools:
@@ -76,6 +77,32 @@ class CompareTools:
             stats[cache_file] = len(cache) if cache else 0
         return stats
 
+    def get_duplicates(self) -> Tuple[Dict[str, list], Dict[str, list]]:
+        """
+        Get duplicate files from source and target directories.
+        
+        Returns:
+            Tuple containing:
+            - Dictionary of source duplicates (hash -> list of paths)
+            - Dictionary of target duplicates (hash -> list of paths)
+        """
+        source_dups = {}
+        target_dups = {}
+        
+        # Read duplicate files from CSVs
+        for csv_file, dups_dict in [("source_dups.csv", source_dups), 
+                                  ("target_dups.csv", target_dups)]:
+            if os.path.exists(csv_file):
+                with open(csv_file, 'r') as f:
+                    reader = csv.reader(f)
+                    next(reader)  # Skip header
+                    for row in reader:
+                        if len(row) >= 2:
+                            hash_val, paths = row
+                            dups_dict[hash_val] = paths.split("|")
+        
+        return source_dups, target_dups
+
 def main():
     """Example usage of the CompareTools class."""
     compare = CompareTools()
@@ -88,6 +115,29 @@ def main():
             print("\nFirst 5 missing files:")
             for i, (path, name) in enumerate(list(missing_files.items())[:5]):
                 print(f"{i+1}. {path}")
+
+        # Get and display duplicates
+        source_dups, target_dups = compare.get_duplicates()
+        
+        print(f"\nFound {len(source_dups)} duplicate sets in source directory")
+        if source_dups:
+            print("\nFirst 3 source duplicates:")
+            for i, (hash_val, paths) in enumerate(list(source_dups.items())[:3]):
+                print(f"{i+1}. Hash: {hash_val[:8]}...")
+                for path in paths[:2]:  # Show only first 2 paths
+                    print(f"   - {path}")
+                if len(paths) > 2:
+                    print(f"   - ... and {len(paths)-2} more")
+
+        print(f"\nFound {len(target_dups)} duplicate sets in target directory")
+        if target_dups:
+            print("\nFirst 3 target duplicates:")
+            for i, (hash_val, paths) in enumerate(list(target_dups.items())[:3]):
+                print(f"{i+1}. Hash: {hash_val[:8]}...")
+                for path in paths[:2]:  # Show only first 2 paths
+                    print(f"   - {path}")
+                if len(paths) > 2:
+                    print(f"   - ... and {len(paths)-2} more")
 
         cache_stats = compare.get_cache_stats()
         print("\nCache statistics:")

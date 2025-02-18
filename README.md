@@ -51,13 +51,13 @@ source_dir = /path/to/source/directory
 target_dir = /path/to/target/directory
 
 [FileTypes]
-included_extensions = .jpg, .png, .pdf
-excluded_extensions = .tmp
+excluded_extensions = .tmp, .temp, .bak
 
 [Hashing]
 large_file_threshold = 104857600
 partial_hash_size = 1048576
 ```
+> Note - you must define full (absolute) path! Relative paths are not supported.
 
 ## 📚 Usage
 
@@ -92,6 +92,7 @@ python compare.py
 This will:
 - Scan the source and target directories
 - Create a `missing_files.csv` containing paths of files present in source but missing in target
+- Generate `source_dups.csv` and `target_dups.csv` listing duplicate files in each directory
 - Generate cache files (`source_cache.json` and `target_cache.json`) to speed up future comparisons
 
 ### 2. Copy Missing Files (Python Tool) 📂
@@ -114,6 +115,7 @@ This will:
 - Concurrent file hashing using worker pools
 - Smart hashing for large files (only hashes beginning and end)
 - File hash caching to speed up subsequent runs
+- Duplicate file detection in both source and target directories
 - Progress bar for visual feedback
 - Handles permission errors gracefully
 
@@ -126,6 +128,8 @@ This will:
 ## 📁 Output Files
 
 - 📄 `missing_files.csv`: List of files missing from the target directory
+- 📄 `source_dups.csv`: List of duplicate files in the source directory
+- 📄 `target_dups.csv`: List of duplicate files in the target directory
 - 💾 `source_cache.json`: Cache of file hashes from the source directory
 - 💾 `target_cache.json`: Cache of file hashes from the target directory
 
@@ -140,7 +144,3 @@ Both tools include error handling for common scenarios:
 ## 👥 Contributing
 
 Feel free to submit issues and enhancement requests! Pull requests are welcome! 🎉
-
-## 📝 License
-
-MIT
