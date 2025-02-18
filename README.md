@@ -9,6 +9,8 @@ This repository contains two complementary tools for comparing and copying files
 1. 🚀 A Go-based file comparison tool that identifies missing files
 2. 📦 A Python-based file copy tool that transfers the identified missing files
 
+> 🌟 **New to macOS setup?** Check out our [guide](README_ELI5.md) for simple installation instructions!
+
 ## ⚙️ Prerequisites
 
 ### For the Go Tool 🚀
