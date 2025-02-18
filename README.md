@@ -12,7 +12,12 @@ This repository contains two complementary tools for comparing and copying files
 ## ⚙️ Prerequisites
 
 ### For the Go Tool 🚀
-- Go 1.22 or later
+#### Installing Go with Homebrew
+```bash
+brew install go
+```
+
+- Go 1.22 or later (installed via Homebrew above)
 - Required Go packages (automatically installed via go.mod):
   - github.com/schollz/progressbar/v3
   - gopkg.in/ini.v1
