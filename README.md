@@ -61,12 +61,32 @@ partial_hash_size = 1048576
 
 ## 📚 Usage
 
-### 1. Compare Directories (Go Tool) 🔍
+### 1. Compare Directories 🔍
 
-The Go tool scans both directories and creates a CSV file of missing files:
+You can compare directories using either the Go tool directly or the Python wrapper:
 
+#### Using Go directly:
 ```bash
 go run main.go
+```
+
+#### Using Python wrapper:
+```python
+from compare import CompareTools
+
+# Initialize the comparison tools
+compare = CompareTools()
+
+# Run the comparison
+missing_files, total_missing = compare.compare_directories()
+
+# Get cache statistics
+cache_stats = compare.get_cache_stats()
+```
+
+You can also run the wrapper directly:
+```bash
+python compare.py
 ```
 
 This will:

@@ -299,7 +299,12 @@ func compareDirectories(config *Config) error {
 }
 
 func main() {
-	config, err := loadConfig("config.ini")
+	configPath := "config.ini"
+	if len(os.Args) > 1 {
+		configPath = os.Args[1]
+	}
+	
+	config, err := loadConfig(configPath)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error loading config: %v\n", err)
 		os.Exit(1)
